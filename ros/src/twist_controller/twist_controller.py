@@ -16,13 +16,13 @@ class Controller(object):
         kp = 0.3
         ki = 0.1
         kd = 0.0
-        mn = 0 # minimum throttle value
-        mx = 0.2 #maximum throttle value
-        # using PID controller classW
+        mn = 0   # Min throttle value
+        mx = 0.2 # Max throttle value
+        # using PID controller
         self.throttle_controller = PID(kp, ki, kd, mn, mx)
 
-        tau = 0.5 # 1/(2pi*tau) = cutoff freqency for low pass filter
-        ts = .02 # sample time for 50 hz
+        tau = 0.5 # 1/(2pi*tau) = cutoff freqency 
+        ts = .02 # sample time ,50 hz
         self.vel_lpf = LowPassFilter(tau, ts)
 
         self.vehicle_mass = vehicle_mass
@@ -52,6 +52,7 @@ class Controller(object):
         vel_error = linear_vel - current_vel
         self.last_vel = current_vel
 
+	# for debug when preventing the integral from getting reset in full term
         current_time = rospy.get_time()
         sample_time = current_time - self.last_time
         self.last_time = current_time
@@ -62,7 +63,7 @@ class Controller(object):
 
         if linear_vel == 0. and current_vel < 0.1 :
             throttle = 0
-            brake = 400 #N*m  
+            brake = 700 #N*m  
         elif throttle < .1 and vel_error < 0 :
             throttle = 0
             decel =  max(vel_error, self.decel_limit)
