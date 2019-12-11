@@ -29,32 +29,32 @@ LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this nu
 class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
+		self.pose = None
+		self.base_waypoints = None
+		self.waypoints_2d = None
+		self.waypoint_tree = None
+		self.stopline_wp_idx = -1
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
 
-
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
-	self.pose = None
-	self.base_waypoints = None
-	self.waypoints_2d = None
-	self.waypoint_tree = None
-	self.stopline_wp_idx = -1
+	
 
-	self.loop()
+		self.loop()
 
     def loop(self):
-	rate = rospy.Rate(50);
-	while not rospy.is_shutdown():
-	    if self.pose and self.base_waypoints:
-		#Get closet waypoint
-		closet_waypoint_idx = self.get_closest_waypoint_idx()
-		self.publish_waypoints(closet_waypoint_idx)
-	    rate.sleep()
+		rate = rospy.Rate(50);
+		while not rospy.is_shutdown():
+			if self.pose and self.base_waypoints:
+			#Get closet waypoint
+			closet_waypoint_idx = self.get_closest_waypoint_idx()
+			self.publish_waypoints(closet_waypoint_idx)
+			rate.sleep()
     def get_closest_waypoint_idx(self):
         x = self.pose.pose.position.x
         y = self.pose.pose.position.y
@@ -71,19 +71,20 @@ class WaypointUpdater(object):
 
         val = np.dot(cl_vect - prev_vect, pos_vect - cl_vect)
 
+		#if cl is in the front of pos, pick next point
         if val > 0:
             closest_idx = (closest_idx + 1) % len(self.waypoints_2d)
         return closest_idx
 
     def publish_waypoints(self,closet_idx):
         lane = Lane()
-	lane.header = self.base_waypoints.header
-	lane.waypoints = self.base_waypoints.waypoints[closet_idx:closet_idx+LOOKAHEAD_WPS]
+		lane.header = self.base_waypoints.header
+		lane.waypoints = self.base_waypoints.waypoints[closet_idx:closet_idx+LOOKAHEAD_WPS]
         self.final_waypoints_pub.publish(lane)
 
     def pose_cb(self, msg):
         # TODO: Implement
-	self.pose = msg
+		self.pose = msg
         
 
     def waypoints_cb(self, waypoints):
